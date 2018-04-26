@@ -4,13 +4,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
+import java.io.Reader;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 
-import com.eroi.migrate.Migration;
-import com.eroi.migrate.misc.Closer;
+import com.eroi.migrate.AbstractMigration;
+import com.eroi.migrate.ScriptRunner;
 import com.eroi.migrate.misc.Log;
 
 /**
@@ -23,7 +23,7 @@ import com.eroi.migrate.misc.Log;
  * 
  *
  */
-public abstract class AbstractFileBasedMigration implements Migration {
+public abstract class AbstractFileBasedMigration extends AbstractMigration {
 
 	private static Log log = Log.getLog(AbstractFileBasedMigration.class);
 
@@ -31,34 +31,40 @@ public abstract class AbstractFileBasedMigration implements Migration {
 	private String downScriptPath;
 	private String description;
 
-	public AbstractFileBasedMigration(String description, String upScriptPath, String downScriptPath) {
-		this.description = description;
-		this.upScriptPath = upScriptPath;
-		this.downScriptPath = downScriptPath;
+	@Override
+	public void up() {
+		Connection conn = getConfiguration().getConnection();
+		Reader reader = getReader(upScriptPath);
+		ScriptRunner runner = new ScriptRunner(conn);
+		runner.runScript(reader);
+		try {
+			conn.setAutoCommit(true);
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
-	public String getDescription() {
-		return description;
+	@Override
+	public void down() {
+		Connection conn = getConfiguration().getConnection();
+		Reader reader = getReader(downScriptPath);
+		ScriptRunner runner = new ScriptRunner(conn);
+		runner.runScript(reader);
+		try {
+			conn.setAutoCommit(true);
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
-	public void up(Connection connection) throws SQLException {
-		String script = getFileContents(upScriptPath);
-
-		executeStatement(connection, script);
-
-	}
-
-	public void down(Connection connection) throws SQLException {
-		String script = getFileContents(downScriptPath);
-
-		executeStatement(connection, script);
-	}
-
-	private String getFileContents(String scriptPath) {
-
-		StringBuffer retVal = new StringBuffer();
-
-		File file = new File(scriptPath);
+	private Reader getReader(String scriptPath) {
+		if (scriptPath == null) {
+			return null;
+		}
+		URL url = AbstractFileBasedMigration.class.getClassLoader().getResource(scriptPath);
+		File file = new File(url.getFile());
 
 		if (!file.exists()) {
 			log.warn(scriptPath + " does not exist - no migration work is being done");
@@ -67,46 +73,42 @@ public abstract class AbstractFileBasedMigration implements Migration {
 		BufferedReader buffer = null;
 		try {
 			buffer = new BufferedReader(new FileReader(file));
-
-			String line = null;
-			while ((line = buffer.readLine()) != null) {
-				retVal.append(line);
-			}
 		}
 		catch (FileNotFoundException e) {
 			log.warn(scriptPath + " could not be loaded - no migration work is being done");
 			return null;
 		}
-		catch (IOException e) {
-			log.warn(scriptPath + " could not be read - no migration work is being done");
-			return null;
-		}
-		finally {
-			if (buffer != null) {
-				try {
-					buffer.close();
-				}
-				catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-
-		return retVal.toString();
+		return buffer;
 	}
 
-	private static void executeStatement(Connection connection, String query) throws SQLException {
+	abstract public void initPath();
 
-		Statement statement = null;
-
-		try {
-			statement = connection.createStatement();
-			statement.executeUpdate(query);
-		}
-		finally {
-			Closer.close(statement);
-		}
-
+	@Override
+	protected void init() {
+		this.initPath();
 	}
 
+	public String getDescription() {
+		return description;
+	}
+
+	public String getUpScriptPath() {
+		return upScriptPath;
+	}
+
+	public void setUpScriptPath(String upScriptPath) {
+		this.upScriptPath = upScriptPath;
+	}
+
+	public String getDownScriptPath() {
+		return downScriptPath;
+	}
+
+	public void setDownScriptPath(String downScriptPath) {
+		this.downScriptPath = downScriptPath;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
 }

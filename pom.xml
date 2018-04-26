@@ -4,7 +4,7 @@
 	<groupId>com.eroi</groupId>
 	<artifactId>migrate4j</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0</version>
+	<version>1.1</version>
 	<name>migrate4j</name>
 	<url>http://maven.apache.org</url>
 
@@ -52,6 +52,23 @@
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.0.1</version>
+				<configuration>
+					<attach>true</attach>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.6</version>
 				<configuration>
@@ -82,7 +99,7 @@
 					<!-- 是否混淆 -->
 					<obfuscate>true</obfuscate>
 					<!-- 指定生成文件分类 -->
-					<attachArtifactClassifier>aaa</attachArtifactClassifier>
+					<attachArtifactClassifier>1.0</attachArtifactClassifier>
 					<options>
 						<!-- JDK目标版本1.6 -->
 						<option>-target 1.6</option>
@@ -103,7 +120,8 @@
 						<option>-keepattributes
 							Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,LocalVariable*Table,*Annotation*,Synthetic,EnclosingMethod</option>
 						<!-- 不混淆所有的set/get方法，毕竟项目中使用的部分第三方框架（例如Shiro）会用到大量的set/get映射 -->
-						<option>-keepclassmembers public class * {void set*(***);*** get*();}</option>
+						<option>-keepclassmembers public class * {void set*(***);***
+							get*();}</option>
 					</options>
 					<outjar>${project.artifactId}-bbb.jar</outjar>
 					<!-- 添加依赖，这里你可以按你的需要修改，这里测试只需要一个JRE的Runtime包就行了 -->
@@ -133,7 +151,6 @@
 			<version>5.1.45</version>
 			<scope>provided</scope>
 		</dependency>
-
 	</dependencies>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

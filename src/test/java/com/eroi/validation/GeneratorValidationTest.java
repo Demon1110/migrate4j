@@ -17,8 +17,8 @@ import com.eroi.migrate.Engine;
 import com.eroi.migrate.Execute;
 import com.eroi.migrate.generators.DerbyGenerator;
 import com.eroi.migrate.generators.Generator;
-import com.eroi.migrate.generators.GenericGenerator;
 import com.eroi.migrate.generators.GeneratorFactory;
+import com.eroi.migrate.generators.GenericGenerator;
 import com.eroi.migrate.generators.PostgreSQLGenerator;
 import com.eroi.migrate.misc.Closer;
 
@@ -31,6 +31,7 @@ import db.migrations.Migration_6;
 import db.migrations.Migration_7;
 import db.migrations.Migration_8;
 import db.migrations.Migration_9;
+
 
 /**
  * Validates a Generators ability to perform DDL tasks.
